@@ -3,7 +3,6 @@ TEST_COPTS = [
     "-pedantic-errors",
     "-std=c++11",
     "-Wall",
-    "-Wconversion",
     "-Wextra",
     "-Wshadow",
     #    "-Wshorten-64-to-32",
@@ -21,9 +20,6 @@ TEST_ARGS = ["--benchmark_min_time=0.01"]
 
 PER_SRC_TEST_ARGS = ({
     "user_counters_tabular_test.cc": ["--benchmark_counters_tabular=true"],
-    "repetitions_test.cc": [" --benchmark_repetitions=3"],
-    "spec_arg_test.cc" : ["--benchmark_filter=BM_NotChosen"],
-    "spec_arg_verbosity_test.cc" : ["--v=42"],
 })
 
 load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
@@ -52,8 +48,9 @@ cc_library(
             "//:benchmark",
             "//:benchmark_internal_headers",
             "@com_google_googletest//:gtest",
-            "@com_google_googletest//:gtest_main",
-        ]
+        ] + (
+            ["@com_google_googletest//:gtest_main"] if (test_src[-len("gtest.cc"):] == "gtest.cc") else []
+        ),
         # FIXME: Add support for assembly tests to bazel.
         # See Issue #556
         # https://github.com/google/benchmark/issues/556

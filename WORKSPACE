@@ -1,7 +1,12 @@
 workspace(name = "com_github_google_benchmark")
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
-load("@bazel_tools//tools/build_defs/repo:git.bzl", "git_repository")
+
+http_archive(
+    name = "rules_cc",
+    strip_prefix = "rules_cc-a508235df92e71d537fcbae0c7c952ea6957a912",
+    urls = ["https://github.com/bazelbuild/rules_cc/archive/a508235df92e71d537fcbae0c7c952ea6957a912.zip"],
+)
 
 http_archive(
     name = "com_google_absl",
@@ -10,10 +15,10 @@ http_archive(
     urls = ["https://github.com/abseil/abseil-cpp/archive/20200225.2.tar.gz"],
 )
 
-git_repository(
+http_archive(
     name = "com_google_googletest",
-    remote = "https://github.com/google/googletest.git",
-    tag = "release-1.11.0",
+    strip_prefix = "googletest-3f0cf6b62ad1eb50d8736538363d3580dd640c3e",
+    urls = ["https://github.com/google/googletest/archive/3f0cf6b62ad1eb50d8736538363d3580dd640c3e.zip"],
 )
 
 http_archive(
@@ -27,18 +32,6 @@ http_archive(
 new_local_repository(
     name = "python_headers",
     build_file = "@//bindings/python:python_headers.BUILD",
-    path = "/usr/include/python3.6",  # May be overwritten by setup.py.
+    path = "/usr/include/python3.8",  # May be overwritten by setup.py.
 )
 
-http_archive(
-    name = "rules_python",
-    url = "https://github.com/bazelbuild/rules_python/releases/download/0.1.0/rules_python-0.1.0.tar.gz",
-    sha256 = "b6d46438523a3ec0f3cead544190ee13223a52f6a6765a29eae7b7cc24cc83a0",
-)
-
-load("@rules_python//python:pip.bzl", pip3_install="pip_install")
-
-pip3_install(
-   name = "py_deps",
-   requirements = "//:requirements.txt",
-)

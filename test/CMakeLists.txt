@@ -1,7 +1,5 @@
 # Enable the tests
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-
 find_package(Threads REQUIRED)
 include(CheckCXXCompilerFlag)
 
@@ -37,11 +35,10 @@ if (DEFINED BENCHMARK_CXX_LINKER_FLAGS)
 endif()
 
 add_library(output_test_helper STATIC output_test_helper.cc output_test.h)
-target_link_libraries(output_test_helper PRIVATE benchmark::benchmark)
 
 macro(compile_benchmark_test name)
   add_executable(${name} "${name}.cc")
-  target_link_libraries(${name} benchmark::benchmark_main ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(${name} benchmark::benchmark ${CMAKE_THREAD_LIBS_INIT})
 endmacro(compile_benchmark_test)
 
 macro(compile_benchmark_test_with_main name)
@@ -51,22 +48,13 @@ endmacro(compile_benchmark_test_with_main)
 
 macro(compile_output_test name)
   add_executable(${name} "${name}.cc" output_test.h)
-  target_link_libraries(${name} output_test_helper benchmark::benchmark_main
+  target_link_libraries(${name} output_test_helper benchmark::benchmark
           ${BENCHMARK_CXX_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 endmacro(compile_output_test)
 
 # Demonstration executable
 compile_benchmark_test(benchmark_test)
 add_test(NAME benchmark COMMAND benchmark_test --benchmark_min_time=0.01)
-
-compile_benchmark_test(spec_arg_test)
-add_test(NAME spec_arg COMMAND spec_arg_test --benchmark_filter=BM_NotChosen)
-
-compile_benchmark_test(spec_arg_verbosity_test)
-add_test(NAME spec_arg_verbosity COMMAND spec_arg_verbosity_test --v=42)
-
-compile_benchmark_test(benchmark_setup_teardown_test)
-add_test(NAME benchmark_setup_teardown COMMAND benchmark_setup_teardown_test)
 
 compile_benchmark_test(filter_test)
 macro(add_filter_test name filter expect)
@@ -99,9 +87,6 @@ add_test(NAME options_benchmarks COMMAND options_test --benchmark_min_time=0.01)
 compile_benchmark_test(basic_test)
 add_test(NAME basic_benchmark COMMAND basic_test --benchmark_min_time=0.01)
 
-compile_output_test(repetitions_test)
-add_test(NAME repetitions_benchmark COMMAND repetitions_test --benchmark_min_time=0.01 --benchmark_repetitions=3)
-
 compile_benchmark_test(diagnostics_test)
 add_test(NAME diagnostics_test COMMAND diagnostics_test --benchmark_min_time=0.01)
 
@@ -128,9 +113,6 @@ add_test(NAME map_test COMMAND map_test --benchmark_min_time=0.01)
 compile_benchmark_test(multiple_ranges_test)
 add_test(NAME multiple_ranges_test COMMAND multiple_ranges_test --benchmark_min_time=0.01)
 
-compile_benchmark_test(args_product_test)
-add_test(NAME args_product_test COMMAND args_product_test --benchmark_min_time=0.01)
-
 compile_benchmark_test_with_main(link_main_test)
 add_test(NAME link_main_test COMMAND link_main_test --benchmark_min_time=0.01)
 
@@ -142,9 +124,6 @@ add_test(NAME templated_fixture_test COMMAND templated_fixture_test --benchmark_
 
 compile_output_test(user_counters_test)
 add_test(NAME user_counters_test COMMAND user_counters_test --benchmark_min_time=0.01)
-
-compile_output_test(perf_counters_test)
-add_test(NAME perf_counters_test COMMAND perf_counters_test --benchmark_min_time=0.01 --benchmark_perf_counters=CYCLES,BRANCHES)
 
 compile_output_test(internal_threading_test)
 add_test(NAME internal_threading_test COMMAND internal_threading_test --benchmark_min_time=0.01)
@@ -164,8 +143,8 @@ add_test(NAME user_counters_thousands_test COMMAND user_counters_thousands_test 
 compile_output_test(memory_manager_test)
 add_test(NAME memory_manager_test COMMAND memory_manager_test --benchmark_min_time=0.01)
 
-# MSVC does not allow to set the language standard to C++98/03.
-if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+check_cxx_compiler_flag(-std=c++03 BENCHMARK_HAS_CXX03_FLAG)
+if (BENCHMARK_HAS_CXX03_FLAG)
   compile_benchmark_test(cxx03_test)
   set_target_properties(cxx03_test
       PROPERTIES
@@ -176,17 +155,11 @@ if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   # causing the test to fail to compile. To prevent this we explicitly disable
   # the warning.
   check_cxx_compiler_flag(-Wno-odr BENCHMARK_HAS_WNO_ODR)
-  check_cxx_compiler_flag(-Wno-lto-type-mismatch BENCHMARK_HAS_WNO_LTO_TYPE_MISMATCH)
-  # Cannot set_target_properties multiple times here because the warnings will
-  # be overwritten on each call
-  set (DISABLE_LTO_WARNINGS "")
-  if (BENCHMARK_HAS_WNO_ODR)
-    set(DISABLE_LTO_WARNINGS "${DISABLE_LTO_WARNINGS} -Wno-odr")
+  if (BENCHMARK_ENABLE_LTO AND BENCHMARK_HAS_WNO_ODR)
+    set_target_properties(cxx03_test
+        PROPERTIES
+        LINK_FLAGS "-Wno-odr")
   endif()
-  if (BENCHMARK_HAS_WNO_LTO_TYPE_MISMATCH)
-    set(DISABLE_LTO_WARNINGS "${DISABLE_LTO_WARNINGS} -Wno-lto-type-mismatch")
-  endif()
-  set_target_properties(cxx03_test PROPERTIES LINK_FLAGS "${DISABLE_LTO_WARNINGS}")
   add_test(NAME cxx03 COMMAND cxx03_test --benchmark_min_time=0.01)
 endif()
 
@@ -217,12 +190,9 @@ if (BENCHMARK_ENABLE_GTEST_TESTS)
 
   add_gtest(benchmark_gtest)
   add_gtest(benchmark_name_gtest)
-  add_gtest(benchmark_random_interleaving_gtest)
   add_gtest(commandlineflags_gtest)
   add_gtest(statistics_gtest)
   add_gtest(string_util_gtest)
-  add_gtest(perf_counters_gtest)
-  add_gtest(time_unit_gtest)
 endif(BENCHMARK_ENABLE_GTEST_TESTS)
 
 ###############################################################################

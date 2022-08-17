@@ -1,28 +1,27 @@
-#include <cstdint>
-
 #include "benchmark/benchmark.h"
+
+#include <cstdint>
 
 namespace {
 #if defined(__GNUC__)
-std::int64_t double_up(const std::int64_t x) __attribute__((const));
+std::uint64_t double_up(const std::uint64_t x) __attribute__((const));
 #endif
-std::int64_t double_up(const std::int64_t x) { return x * 2; }
-}  // namespace
+std::uint64_t double_up(const std::uint64_t x) { return x * 2; }
+}
 
 // Using DoNotOptimize on types like BitRef seem to cause a lot of problems
 // with the inline assembly on both GCC and Clang.
 struct BitRef {
   int index;
-  unsigned char& byte;
+  unsigned char &byte;
 
- public:
+public:
   static BitRef Make() {
     static unsigned char arr[2] = {};
     BitRef b(1, arr[0]);
     return b;
   }
-
- private:
+private:
   BitRef(int i, unsigned char& b) : index(i), byte(b) {}
 };
 
